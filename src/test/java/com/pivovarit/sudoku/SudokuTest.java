@@ -1,22 +1,34 @@
 package com.pivovarit.sudoku;
 
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.TestFactory;
 
 import java.util.Arrays;
+import java.util.stream.Stream;
 
+import static com.pivovarit.sudoku.SudokuTest.Sudoku.SUDOKU;
+import static java.util.stream.IntStream.range;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.DynamicTest.dynamicTest;
 
 class SudokuTest {
 
     // Rerun Automatically (IntelliJ IDEA)
-    @Test
-    void shouldBeSolved() {
-        assertThat(Sudoku.SUDOKU.isSolved()).isTrue();
+    @TestFactory
+    Stream<DynamicTest> shouldBeSolved() {
+        return Stream.of(
+            range(0, Sudoku.SIZE)
+              .mapToObj(i -> dynamicTest("row %d should contain all digits".formatted(i), () -> assertThat(Sudoku.check(SUDOKU.rows()[i])).isTrue())),
+            range(0, Sudoku.SIZE)
+              .mapToObj(i -> dynamicTest("col %d should contain all digits".formatted(i), () -> assertThat(Sudoku.check(SUDOKU.columns()[i])).isTrue())),
+            range(0, Sudoku.SIZE)
+              .mapToObj(i -> dynamicTest("square %d should contain all digits".formatted(i), () -> assertThat(Sudoku.check(SUDOKU.squares()[i])).isTrue())))
+          .flatMap(s -> s);
     }
 
     record Sudoku(int[][] rows) {
+        private static final int SIZE = 9;
 
-        public static final int SIZE = 9;
         public static final Sudoku SUDOKU = new Sudoku(new int[][]{
           {4, 3, 5, 2, 6, 9, 7, 8, 1},
           {6, 8, 2, 5, 7, 1, 4, 9, 3},
@@ -38,7 +50,7 @@ class SudokuTest {
         }
 
         private boolean checkAll(int[][] blocks) {
-            return Arrays.stream(blocks).allMatch(this::check);
+            return Arrays.stream(blocks).allMatch(Sudoku::check);
         }
 
         private int[][] columns() {
@@ -63,7 +75,7 @@ class SudokuTest {
             return squares;
         }
 
-        private boolean check(int[] block) {
+        private static boolean check(int[] block) {
             boolean[] seen = new boolean[SIZE];
             return Arrays.stream(block).allMatch(n -> n > 0 && !seen[n - 1] && (seen[n - 1] = true));
         }
